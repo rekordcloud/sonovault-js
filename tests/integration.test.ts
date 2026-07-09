@@ -10,7 +10,9 @@ import { SonoVault } from "../src/index.js";
 const apiKey = process.env.SONOVAULT_API_KEY;
 
 describe.skipIf(!apiKey)("live API", () => {
-  const sv = new SonoVault({ apiKey: apiKey! });
+  // The describe body is collected even when skipped, so fall back to a
+  // dummy key — no test runs with it.
+  const sv = new SonoVault({ apiKey: apiKey ?? "svk_skipped" });
 
   it("searches by artist + title", async () => {
     const { results } = await sv.tracks.search({ artist: "Daft Punk", title: "One More Time", limit: 3 });
