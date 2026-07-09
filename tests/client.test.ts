@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
-import { SonoVault, SonoVaultError, verifyWebhookSignature } from "../src/index.js";
+import { SonoVault, SonoVaultError, paginate, verifyWebhookSignature } from "../src/index.js";
 
 function mockFetch(responses: Array<{ status: number; body?: unknown; headers?: Record<string, string> }>) {
   let call = 0;
@@ -213,5 +213,22 @@ describe("user agent", () => {
     await sv.genres.list();
 
     expect((calls[0].init.headers as Record<string, string>)["User-Agent"]).toMatch(/^sonovault-js\/\d+\.\d+\.\d+$/);
+  });
+});
+
+describe("paginate", () => {
+  it("walks all pages and yields every item", async () => {
+    const { fetchImpl } = mockFetch([
+      { status: 200, body: { results: [{ id: 1 }, { id: 2 }], next_cursor: "c1" } },
+      { status: 200, body: { results: [{ id: 3 }], next_cursor: null } },
+    ]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const items = [];
+    for await (const item of paginate((cursor) => sv.suggestions.list({ cursor }))) {
+      items.push(item);
+    }
+
+    expect(items.map((i) => (i as { id: number }).id)).toEqual([1, 2, 3]);
   });
 });

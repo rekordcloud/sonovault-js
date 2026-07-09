@@ -62,6 +62,16 @@ for (const row of batch.results) {
 List endpoints return `{ results, next_cursor }`. Pass the cursor back to get the next page. `next_cursor` is `null` on the last page.
 
 ```ts
+import { paginate } from "sonovault";
+
+for await (const release of paginate((cursor) => sv.artists.releases(42, { cursor }))) {
+  console.log(release.title);
+}
+```
+
+Or walk the cursor yourself:
+
+```ts
 let cursor: string | undefined;
 do {
   const page = await sv.artists.releases(42, { cursor });
