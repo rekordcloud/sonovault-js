@@ -1,5 +1,6 @@
+import { createHmac } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
-import { SonoVault, SonoVaultError } from "../src/index.js";
+import { SonoVault, SonoVaultError, verifyWebhookSignature } from "../src/index.js";
 
 function mockFetch(responses: Array<{ status: number; body?: unknown; headers?: Record<string, string> }>) {
   let call = 0;
@@ -149,6 +150,31 @@ describe("SonoVault", () => {
       for await (const _ of sv.streams.live()) void _;
     };
     await expect(iterate()).rejects.toMatchObject({ status: 401 });
+  });
+
+  it("verifyWebhookSignature accepts a valid header and rejects tampering", () => {
+    const secret = "whsec_test";
+    const payload = '{"id":"evt_1","type":"stream.play.started"}';
+    const t = Math.floor(Date.now() / 1000);
+    const v1 = createHmac("sha256", secret).update(`${t}.${payload}`).digest("hex");
+    const header = `t=${t},v1=${v1}`;
+
+    expect(verifyWebhookSignature({ secret, header, payload })).toBe(true);
+    expect(verifyWebhookSignature({ secret, header, payload: Buffer.from(payload) })).toBe(true);
+    expect(verifyWebhookSignature({ secret, header, payload: payload + "x" })).toBe(false);
+    expect(verifyWebhookSignature({ secret: "whsec_other", header, payload })).toBe(false);
+    expect(verifyWebhookSignature({ secret, header: "garbage", payload })).toBe(false);
+  });
+
+  it("verifyWebhookSignature rejects stale timestamps unless tolerance is 0", () => {
+    const secret = "whsec_test";
+    const payload = "{}";
+    const t = Math.floor(Date.now() / 1000) - 3600;
+    const v1 = createHmac("sha256", secret).update(`${t}.${payload}`).digest("hex");
+    const header = `t=${t},v1=${v1}`;
+
+    expect(verifyWebhookSignature({ secret, header, payload })).toBe(false);
+    expect(verifyWebhookSignature({ secret, header, payload, toleranceSeconds: 0 })).toBe(true);
   });
 
   it("returns undefined for 204 responses", async () => {

@@ -1,6 +1,7 @@
 export { SonoVault } from "./client.js";
 export type { SonoVaultOptions } from "./client.js";
 export { SonoVaultError } from "./error.js";
+export { verifyWebhookSignature } from "./webhooks.js";
 export type {
   Artist,
   Genre,
