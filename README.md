@@ -17,6 +17,8 @@ npm install sonovault
 
 Node 18+ (uses the built-in `fetch`). ESM and CommonJS both supported.
 
+Use this library server-side. Shipping your API key in browser code exposes it to anyone who opens devtools. If a key leaks, rotate it in your [dashboard](https://sonovault.now/dashboard/keys).
+
 ## Quickstart
 
 ```ts
