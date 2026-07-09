@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 ### Added
 
 - `verifyWebhookSignature()` helper for checking the `SonoVault-Signature` header on webhook deliveries (HMAC-SHA256, constant-time compare, replay-window check).
+- `timeoutMs` client option (default 30000, 0 disables). Requests previously had no timeout and could hang on a dead connection.
 
 ### Fixed
 

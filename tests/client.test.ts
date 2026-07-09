@@ -109,6 +109,24 @@ describe("SonoVault", () => {
     expect(calls.length).toBe(1);
   });
 
+  it("attaches a timeout signal to requests", async () => {
+    const { fetchImpl, calls } = mockFetch([{ status: 200, body: { genres: [] } }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl, timeoutMs: 5000 });
+
+    await sv.genres.list();
+
+    expect(calls[0].init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("omits the signal when timeoutMs is 0", async () => {
+    const { fetchImpl, calls } = mockFetch([{ status: 200, body: { genres: [] } }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl, timeoutMs: 0 });
+
+    await sv.genres.list();
+
+    expect(calls[0].init.signal).toBeUndefined();
+  });
+
   it("supports a custom baseUrl", async () => {
     const { fetchImpl, calls } = mockFetch([{ status: 200, body: { genres: [] } }]);
     const sv = new SonoVault({ apiKey: "svk_test", baseUrl: "http://localhost:3000/", fetch: fetchImpl });

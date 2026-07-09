@@ -24,6 +24,11 @@ export interface SonoVaultOptions {
   baseUrl?: string;
   /** Retries on 429/5xx responses. Default 2; set 0 to disable. */
   maxRetries?: number;
+  /**
+   * Per-request timeout in milliseconds. Default 30000; set 0 to disable.
+   * Does not apply to `streams.live()`, which stays open indefinitely.
+   */
+  timeoutMs?: number;
   /** Custom fetch implementation (for testing or polyfills). */
   fetch?: typeof globalThis.fetch;
 }
@@ -42,6 +47,7 @@ export class SonoVault {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly maxRetries: number;
+  private readonly timeoutMs: number;
   private readonly fetchImpl: typeof globalThis.fetch;
 
   constructor(options: SonoVaultOptions) {
@@ -49,6 +55,7 @@ export class SonoVault {
     this.apiKey = options.apiKey;
     this.baseUrl = (options.baseUrl ?? "https://api.sonovault.now").replace(/\/$/, "");
     this.maxRetries = options.maxRetries ?? 2;
+    this.timeoutMs = options.timeoutMs ?? 30_000;
     this.fetchImpl = options.fetch ?? globalThis.fetch;
   }
 
@@ -72,9 +79,15 @@ export class SonoVault {
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       let res: Response;
       try {
-        res = await this.fetchImpl(url, { method: opts.method ?? "GET", headers, body });
+        const signal = this.timeoutMs > 0 ? AbortSignal.timeout(this.timeoutMs) : undefined;
+        res = await this.fetchImpl(url, { method: opts.method ?? "GET", headers, body, signal });
       } catch (err) {
-        lastError = new SonoVaultError(`Network error: ${(err as Error).message}`, 0);
+        const e = err as Error;
+        const timedOut = e.name === "TimeoutError" || e.name === "AbortError";
+        lastError = new SonoVaultError(
+          timedOut ? `Request timed out after ${this.timeoutMs}ms` : `Network error: ${e.message}`,
+          0,
+        );
         continue;
       }
 
