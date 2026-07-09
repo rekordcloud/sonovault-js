@@ -312,6 +312,7 @@ export class SonoVault {
     create: (body: { url: string; event_types?: string[]; description?: string }) =>
       this.request<Webhook>("/v1/webhooks", { method: "POST", json: body }),
     list: () => this.request<{ webhooks: Webhook[] }>("/v1/webhooks"),
+    get: (id: string) => this.request<Webhook>(`/v1/webhooks/${id}`),
     update: (id: string, body: Record<string, unknown>) =>
       this.request<Webhook>(`/v1/webhooks/${id}`, { method: "PATCH", json: body }),
     delete: (id: string) => this.request<void>(`/v1/webhooks/${id}`, { method: "DELETE" }),
