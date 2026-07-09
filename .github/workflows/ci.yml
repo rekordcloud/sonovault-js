@@ -17,6 +17,14 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm ci
+      - name: Check package.json and src/version.ts agree
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          SRC=$(node -p "require('fs').readFileSync('src/version.ts','utf8').match(/\"([0-9]+\.[0-9]+\.[0-9]+)\"/)[1]")
+          if [ "$PKG" != "$SRC" ]; then
+            echo "Version drift: package.json=$PKG src/version.ts=$SRC"
+            exit 1
+          fi
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
