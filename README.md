@@ -1,0 +1,114 @@
+# sonovault
+
+[![CI](https://github.com/rekordcloud/sonovault-js/actions/workflows/ci.yml/badge.svg)](https://github.com/rekordcloud/sonovault-js/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/sonovault)](https://www.npmjs.com/package/sonovault)
+
+TypeScript/Node client for the **[SonoVault](https://sonovault.now)** music metadata API — 90M+ tracks with ISRC, ISWC, genre, record label, canonical release dates, and cross-platform IDs for Spotify, Apple Music, Tidal, Beatport, Discogs, and MusicBrainz, resolved in a single call.
+
+- **One key, no OAuth** — a single `x-api-key` header, no approval queue.
+- **Free tier** — 1,000 requests/month, no credit card: [get an API key](https://sonovault.now).
+- **Docs** — full API reference at [sonovault.now/docs](https://sonovault.now/docs).
+
+## Install
+
+```bash
+npm install sonovault
+```
+
+Node 18+ (uses the built-in `fetch`). ESM and CommonJS both supported.
+
+## Quickstart
+
+```ts
+import { SonoVault } from "sonovault";
+
+const sv = new SonoVault({ apiKey: process.env.SONOVAULT_API_KEY! });
+
+// Find a track's ISRC from artist + title
+const { results } = await sv.tracks.search({ artist: "Daft Punk", title: "One More Time" });
+console.log(results[0].isrc); // "GBDUW0000053"
+console.log(results[0].genre, results[0].releases[0]?.label?.name);
+
+// Resolve that ISRC to its ID on every platform
+const { links } = await sv.tracks.links({ isrc: "GBDUW0000053" });
+for (const link of links) {
+  console.log(link.source, link.url); // spotify https://open.spotify.com/track/…
+}
+
+// Recording → composition (ISWC), for royalty/publishing workflows
+const work = await sv.tracks.iswc({ isrc: "GBDUW0000053" });
+```
+
+## Bulk resolve
+
+Resolve up to 100 lines — track names, ISRCs, or platform IDs — in one request (great for enriching play logs and library exports):
+
+```ts
+const batch = await sv.tracks.resolve({
+  input_type: "track_name",
+  items: [
+    { artist: "Daft Punk", title: "Harder, Better, Faster, Stronger" },
+    { artist: "Daft Punk", title: "Around the World" },
+  ],
+});
+
+for (const row of batch.results) {
+  console.log(row.status, row.track?.isrc, row.track?.releases[0]?.label?.name);
+}
+```
+
+## Pagination
+
+List endpoints return `{ results, next_cursor }` — pass the cursor back to get the next page (`next_cursor` is `null` on the last page):
+
+```ts
+let cursor: string | undefined;
+do {
+  const page = await sv.artists.releases(42, { cursor });
+  // …use page.results
+  cursor = page.next_cursor ?? undefined;
+} while (cursor);
+```
+
+## Error handling
+
+Non-2xx responses throw a typed `SonoVaultError`:
+
+```ts
+import { SonoVaultError } from "sonovault";
+
+try {
+  await sv.tracks.browse({ genre: "House" }); // paid-tier endpoint
+} catch (err) {
+  if (err instanceof SonoVaultError) {
+    console.log(err.status, err.isForbidden, err.message);
+  }
+}
+```
+
+Rate-limited responses that carry a `Retry-After` header are retried automatically (twice by default; configure with `maxRetries`).
+
+## API coverage
+
+| Namespace | Methods |
+|---|---|
+| `sv.tracks` | `search`, `get`, `byIsrc`, `iswc`, `byIswc`, `links`, `resolve`, `identify`, `identifyAudio`, `browse` |
+| `sv.artists` | `search`, `get`, `releases` |
+| `sv.labels` | `search`, `get`, `releases`, `artists` |
+| `sv.releases` | `search`, `get`, `latest` |
+| `sv.genres` | `list` |
+| `sv.suggestions` | `submit`, `list` |
+| `sv.streams` | `create`, `list`, `get`, `update`, `history`, `report`, `live`, `stop` |
+| `sv.webhooks` | `create`, `list`, `update`, `delete`, `test`, `deliveries` |
+
+Some endpoints (audio identify, browse, charts, stream monitoring) need a paid tier — see [pricing](https://sonovault.now/pricing). Everything else works on the free tier.
+
+## Related
+
+- [SonoVault API docs](https://sonovault.now/docs) — full endpoint reference with examples in 8 languages
+- [sonovault-python](https://github.com/rekordcloud/sonovault-python) — the Python client
+- [Free ISRC lookup](https://sonovault.now/isrc-lookup) · [ISWC lookup](https://sonovault.now/iswc-lookup) — browser tools built on the same API
+
+## License
+
+MIT

@@ -1,0 +1,128 @@
+import { describe, expect, it, vi } from "vitest";
+import { SonoVault, SonoVaultError } from "../src/index.js";
+
+function mockFetch(responses: Array<{ status: number; body?: unknown; headers?: Record<string, string> }>) {
+  let call = 0;
+  const calls: Array<{ url: string; init: RequestInit }> = [];
+  const fetchImpl = vi.fn(async (url: URL | RequestInfo, init?: RequestInit) => {
+    calls.push({ url: String(url), init: init ?? {} });
+    const r = responses[Math.min(call++, responses.length - 1)];
+    return new Response(r.body === undefined ? null : JSON.stringify(r.body), {
+      status: r.status,
+      headers: { "Content-Type": "application/json", ...(r.headers ?? {}) },
+    });
+  });
+  return { fetchImpl: fetchImpl as unknown as typeof fetch, calls };
+}
+
+const track = {
+  id: 123,
+  title: "One More Time",
+  artists: [{ id: 1, name: "Daft Punk" }],
+  isrc: "GBDUW0000053",
+  releases: [],
+  duration: 320,
+  genre: "House",
+  subgenre: null,
+};
+
+describe("SonoVault", () => {
+  it("requires an apiKey", () => {
+    expect(() => new SonoVault({ apiKey: "" })).toThrow(/apiKey/);
+  });
+
+  it("sends the x-api-key header and builds query strings", async () => {
+    const { fetchImpl, calls } = mockFetch([{ status: 200, body: { results: [track], next_cursor: null } }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const page = await sv.tracks.search({ artist: "Daft Punk", title: "One More Time", limit: 5 });
+
+    expect(page.results[0].isrc).toBe("GBDUW0000053");
+    expect(calls[0].url).toContain("https://api.sonovault.now/v1/tracks/search?");
+    expect(calls[0].url).toContain("artist=Daft+Punk");
+    expect(calls[0].url).toContain("limit=5");
+    expect((calls[0].init.headers as Record<string, string>)["x-api-key"]).toBe("svk_test");
+  });
+
+  it("omits undefined query params", async () => {
+    const { fetchImpl, calls } = mockFetch([{ status: 200, body: { results: [], next_cursor: null } }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    await sv.tracks.search({ artist: "Daft Punk", title: "Around the World", cursor: undefined });
+
+    expect(calls[0].url).not.toContain("cursor");
+  });
+
+  it("URL-encodes path params", async () => {
+    const { fetchImpl, calls } = mockFetch([{ status: 200, body: track }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    await sv.tracks.byIsrc("GBDUW0000053");
+
+    expect(calls[0].url).toBe("https://api.sonovault.now/v1/tracks/isrc/GBDUW0000053");
+  });
+
+  it("POSTs JSON bodies for resolve", async () => {
+    const { fetchImpl, calls } = mockFetch([
+      { status: 200, body: { results: [], partial: false, processed: 0, credits_used: 0, credits_remaining: 1000, message: null } },
+    ]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    await sv.tracks.resolve({ input_type: "isrc", items: ["GBDUW0000053"] });
+
+    expect(calls[0].init.method).toBe("POST");
+    expect((calls[0].init.headers as Record<string, string>)["Content-Type"]).toBe("application/json");
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ input_type: "isrc", items: ["GBDUW0000053"] });
+  });
+
+  it("throws SonoVaultError with status on API errors", async () => {
+    const { fetchImpl } = mockFetch([{ status: 403, body: { error: "Paid plan required" } }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const err = await sv.tracks.browse({ genre: "House" }).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(SonoVaultError);
+    expect((err as SonoVaultError).status).toBe(403);
+    expect((err as SonoVaultError).isForbidden).toBe(true);
+    expect((err as SonoVaultError).message).toBe("Paid plan required");
+  });
+
+  it("retries 429 with Retry-After, then succeeds", async () => {
+    const { fetchImpl, calls } = mockFetch([
+      { status: 429, body: { error: "rate limited" }, headers: { "Retry-After": "0" } },
+      { status: 200, body: track },
+    ]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const result = await sv.tracks.get(123);
+
+    expect(result.title).toBe("One More Time");
+    expect(calls.length).toBe(2);
+  });
+
+  it("does not retry a 429 without Retry-After (quota exhaustion)", async () => {
+    const { fetchImpl, calls } = mockFetch([{ status: 429, body: { error: "Monthly quota exceeded" } }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    await expect(sv.tracks.get(123)).rejects.toThrow(/quota/i);
+    expect(calls.length).toBe(1);
+  });
+
+  it("supports a custom baseUrl", async () => {
+    const { fetchImpl, calls } = mockFetch([{ status: 200, body: { genres: [] } }]);
+    const sv = new SonoVault({ apiKey: "svk_test", baseUrl: "http://localhost:3000/", fetch: fetchImpl });
+
+    await sv.genres.list();
+
+    expect(calls[0].url).toBe("http://localhost:3000/v1/genres");
+  });
+
+  it("returns undefined for 204 responses", async () => {
+    const { fetchImpl, calls } = mockFetch([{ status: 204 }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    await sv.webhooks.delete("wh_1");
+
+    expect(calls[0].init.method).toBe("DELETE");
+  });
+});
