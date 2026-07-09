@@ -117,6 +117,40 @@ describe("SonoVault", () => {
     expect(calls[0].url).toBe("http://localhost:3000/v1/genres");
   });
 
+  it("streams.live parses SSE frames into events", async () => {
+    const frames =
+      'data: {"id":"e1","type":"stream.play.started","created":1,"data":{"stream_id":"s1"}}\n\n' +
+      ": keep-alive comment\n\n" +
+      "event: stream.online\n" +
+      'data: {"id":"e2","type":"stream.online","created":2,"data":{"stream_id":"s1"}}\n\n';
+    const body = new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(frames));
+        controller.close();
+      },
+    });
+    const fetchImpl = (async () =>
+      new Response(body, { status: 200, headers: { "Content-Type": "text/event-stream" } })) as unknown as typeof fetch;
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const events = [];
+    for await (const event of sv.streams.live()) events.push(event);
+
+    expect(events.map((e) => e.id)).toEqual(["e1", "e2"]);
+    expect(events[1].type).toBe("stream.online");
+  });
+
+  it("streams.live throws SonoVaultError on a non-2xx response", async () => {
+    const fetchImpl = (async () =>
+      new Response(JSON.stringify({ error: "nope" }), { status: 401 })) as unknown as typeof fetch;
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const iterate = async () => {
+      for await (const _ of sv.streams.live()) void _;
+    };
+    await expect(iterate()).rejects.toMatchObject({ status: 401 });
+  });
+
   it("returns undefined for 204 responses", async () => {
     const { fetchImpl, calls } = mockFetch([{ status: 204 }]);
     const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });

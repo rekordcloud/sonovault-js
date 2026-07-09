@@ -12,6 +12,7 @@ import type {
   ResolveRequest,
   ResolveResponse,
   Stream,
+  StreamEvent,
   Track,
   Webhook,
 } from "./types.js";
@@ -98,6 +99,57 @@ export class SonoVault {
       await new Promise((r) => setTimeout(r, delayMs));
     }
     throw lastError ?? new SonoVaultError("Request failed", 0);
+  }
+
+  /** Connect to an SSE endpoint and yield one parsed JSON event per `data:` frame. */
+  private async *sse<T>(path: string, signal?: AbortSignal): AsyncGenerator<T> {
+    const url = new URL(this.baseUrl + path);
+    const res = await this.fetchImpl(url, {
+      headers: { "x-api-key": this.apiKey, Accept: "text/event-stream" },
+      signal,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => undefined);
+      const message =
+        (body as { error?: string } | undefined)?.error ?? `HTTP ${res.status}`;
+      throw new SonoVaultError(message, res.status, body);
+    }
+    if (!res.body) throw new SonoVaultError("SSE response has no body", res.status);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let dataLines: string[] = [];
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let newline;
+        while ((newline = buffer.indexOf("\n")) !== -1) {
+          const line = buffer.slice(0, newline).replace(/\r$/, "");
+          buffer = buffer.slice(newline + 1);
+          if (line === "") {
+            // Blank line ends the frame.
+            if (dataLines.length > 0) {
+              const data = dataLines.join("\n");
+              dataLines = [];
+              try {
+                yield JSON.parse(data) as T;
+              } catch {
+                // Skip non-JSON frames (keep-alives).
+              }
+            }
+          } else if (line.startsWith("data:")) {
+            dataLines.push(line.slice(5).replace(/^ /, ""));
+          }
+          // event:, id:, retry:, and comment lines are ignored.
+        }
+      }
+    } finally {
+      reader.releaseLock();
+      res.body.cancel().catch(() => {});
+    }
   }
 
   readonly tracks = {
@@ -226,8 +278,18 @@ export class SonoVault {
       this.request<Record<string, unknown>>(`/v1/streams/${id}/history`, { query: params }),
     report: (params: { from: string; until: string; stream_id?: string }) =>
       this.request<Record<string, unknown>>("/v1/streams/report", { query: params }),
-    /** What's playing right now across your monitored streams. */
-    live: () => this.request<Record<string, unknown>>("/v1/streams/live"),
+    /**
+     * Real-time play events for your monitored streams, as an async iterator
+     * over Server-Sent Events. Runs until you `break` or abort the signal.
+     *
+     * ```ts
+     * for await (const event of sv.streams.live()) {
+     *   console.log(event.data.track?.title);
+     * }
+     * ```
+     */
+    live: (options: { signal?: AbortSignal } = {}) =>
+      this.sse<StreamEvent>("/v1/streams/live", options.signal),
     /** Stop monitoring a stream. */
     stop: (id: string) => this.request<void>(`/v1/streams/${id}`, { method: "DELETE" }),
   };

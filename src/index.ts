@@ -18,6 +18,7 @@ export type {
   ResolveResponse,
   ResolveResult,
   Stream,
+  StreamEvent,
   Track,
   TrackArtist,
   TrackRelease,

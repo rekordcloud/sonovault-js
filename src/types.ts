@@ -156,7 +156,26 @@ export interface Webhook {
   id: string;
   url: string;
   event_types?: string[];
-  /** Returned once, on creation — store it to verify delivery signatures. */
+  /** Returned once, on creation. Store it to verify delivery signatures. */
   secret?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * An event from the live SSE feed or a webhook delivery.
+ * Types: `stream.play.started`, `stream.offline`, `stream.online`.
+ */
+export interface StreamEvent {
+  id: string;
+  type: string;
+  created: number | string;
+  data: {
+    stream_id: string;
+    started_at?: string;
+    at?: string;
+    reason?: string;
+    track?: Track;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
