@@ -26,9 +26,8 @@ describe.skipIf(!apiKey)("live API", () => {
     const { results } = await sv.tracks.search({ artist: "Daft Punk", title: "Around the World", limit: 1 });
     const found = results[0];
     const byIsrc = await sv.tracks.byIsrc(found.isrc!);
-    // search returns ids as strings, other endpoints as numbers — compare normalized
-    expect(Number(byIsrc.id)).toBe(Number(found.id));
-    const byId = await sv.tracks.get(Number(found.id));
+    expect(byIsrc.id).toBe(found.id);
+    const byId = await sv.tracks.get(found.id);
     expect(byId.title).toBe(found.title);
   });
 
@@ -49,7 +48,7 @@ describe.skipIf(!apiKey)("live API", () => {
     const { results } = await sv.tracks.search({ artist: "Daft Punk", title: "Harder, Better, Faster, Stronger", limit: 1 });
     const batch = await sv.tracks.resolve({ input_type: "isrc", items: [results[0].isrc!] });
     expect(batch.results[0].status).toBe("matched");
-    expect(Number(batch.results[0].track?.id)).toBe(Number(results[0].id));
+    expect(batch.results[0].track?.id).toBe(results[0].id);
   });
 
   it("lists genres", async () => {

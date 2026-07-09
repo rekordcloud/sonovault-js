@@ -18,13 +18,9 @@ export interface TrackRelease {
 /**
  * The public track shape returned by search, lookups, and resolve.
  * Note: audio features (BPM, key, energy, …) are not exposed on the public API.
- *
- * Known quirk: `/v1/tracks/search` currently returns `id` as a string while
- * other endpoints return a number — normalize with `Number(track.id)` before
- * comparing ids across endpoints.
  */
 export interface Track {
-  id: number | string;
+  id: number;
   title: string;
   releases: TrackRelease[];
   artists: TrackArtist[];
