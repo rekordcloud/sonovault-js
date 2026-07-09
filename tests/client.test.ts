@@ -204,3 +204,14 @@ describe("SonoVault", () => {
     expect(calls[0].init.method).toBe("DELETE");
   });
 });
+
+describe("user agent", () => {
+  it("sends a sonovault-js User-Agent header", async () => {
+    const { fetchImpl, calls } = mockFetch([{ status: 200, body: { genres: [] } }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    await sv.genres.list();
+
+    expect((calls[0].init.headers as Record<string, string>)["User-Agent"]).toMatch(/^sonovault-js\/\d+\.\d+\.\d+$/);
+  });
+});

@@ -1,4 +1,5 @@
 import { SonoVaultError } from "./error.js";
+import { VERSION } from "./version.js";
 import type {
   Artist,
   Genre,
@@ -65,7 +66,10 @@ export class SonoVault {
       if (value !== undefined) url.searchParams.set(key, String(value));
     }
 
-    const headers: Record<string, string> = { "x-api-key": this.apiKey };
+    const headers: Record<string, string> = {
+      "x-api-key": this.apiKey,
+      "User-Agent": `sonovault-js/${VERSION}`,
+    };
     let body: BodyInit | undefined;
     if (opts.json !== undefined) {
       headers["Content-Type"] = "application/json";
@@ -118,7 +122,11 @@ export class SonoVault {
   private async *sse<T>(path: string, signal?: AbortSignal): AsyncGenerator<T> {
     const url = new URL(this.baseUrl + path);
     const res = await this.fetchImpl(url, {
-      headers: { "x-api-key": this.apiKey, Accept: "text/event-stream" },
+      headers: {
+        "x-api-key": this.apiKey,
+        "User-Agent": `sonovault-js/${VERSION}`,
+        Accept: "text/event-stream",
+      },
       signal,
     });
     if (!res.ok) {
