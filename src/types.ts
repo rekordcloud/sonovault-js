@@ -120,15 +120,6 @@ export interface ResolveResponse {
   message: string | null;
 }
 
-export interface IdentifyRequest {
-  /** 50–50,000 integers from `fpcalc -raw` (Chromaprint). */
-  fingerprint: number[];
-  /** Clip duration in seconds. */
-  fingerprint_duration?: number;
-  /** Max results to return, 1–25. */
-  top_n?: number;
-}
-
 export interface IdentifyResult {
   id: number;
   title: string;

@@ -6,7 +6,6 @@ export { paginate } from "./pagination.js";
 export type {
   Artist,
   Genre,
-  IdentifyRequest,
   IdentifyResponse,
   IdentifyResult,
   IswcLookupResponse,

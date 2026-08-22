@@ -3,7 +3,6 @@ import { VERSION } from "./version.js";
 import type {
   Artist,
   Genre,
-  IdentifyRequest,
   IdentifyResponse,
   IswcLookupResponse,
   Label,
@@ -211,10 +210,6 @@ export class SonoVault {
     /** Resolve up to 100 track names, ISRCs, or platform IDs in one request. */
     resolve: (body: ResolveRequest) =>
       this.request<ResolveResponse>("/v1/tracks/resolve", { method: "POST", json: body }),
-
-    /** Identify a track from a Chromaprint fingerprint (`fpcalc -raw`). Paid tiers. */
-    identify: (body: IdentifyRequest) =>
-      this.request<IdentifyResponse>("/v1/tracks/identify", { method: "POST", json: body }),
 
     /**
      * Identify a track from raw audio bytes (any ffmpeg-decodable format).
