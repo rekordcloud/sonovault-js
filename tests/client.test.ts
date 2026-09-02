@@ -232,3 +232,67 @@ describe("paginate", () => {
     expect(items.map((i) => (i as { id: number }).id)).toEqual([1, 2, 3]);
   });
 });
+
+describe("release tracklists and artist MBID", () => {
+  it("exposes disc_number and track_number on a release tracklist", async () => {
+    const { fetchImpl } = mockFetch([
+      {
+        status: 200,
+        body: {
+          id: 7, title: "Discovery",
+          artist: { id: 1, name: "Daft Punk" },
+          tracks: [
+            { id: 1, title: "One More Time", artists: [], isrc: null, duration: 320, genre: [], subgenre: [], disc_number: 1, track_number: 1 },
+            { id: 2, title: "Aerodynamic", artists: [], isrc: null, duration: 212, genre: [], subgenre: [], disc_number: 1, track_number: 2 },
+          ],
+        },
+      },
+    ]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const release = await sv.releases.get(7);
+
+    expect(release.tracks?.map((t) => t.track_number)).toEqual([1, 2]);
+    expect(release.tracks?.[0].disc_number).toBe(1);
+  });
+
+  it("keeps a null position null rather than coercing it to 0", async () => {
+    const { fetchImpl } = mockFetch([
+      {
+        status: 200,
+        body: {
+          id: 7, title: "Partly Positioned",
+          tracks: [
+            { id: 1, title: "Unknown Slot", artists: [], isrc: null, duration: null, genre: [], subgenre: [], disc_number: null, track_number: null },
+          ],
+        },
+      },
+    ]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const release = await sv.releases.get(7);
+
+    expect(release.tracks?.[0].track_number).toBeNull();
+    expect(release.tracks?.[0].disc_number).toBeNull();
+  });
+
+  it("exposes musicbrainz_id on an artist", async () => {
+    const { fetchImpl } = mockFetch([
+      {
+        status: 200,
+        body: {
+          id: 1, name: "Daft Punk", country: "France",
+          wikidata_id: "Q185828",
+          musicbrainz_id: "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+          release_count: 42,
+        },
+      },
+    ]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const artist = await sv.artists.get(1);
+
+    expect(artist.musicbrainz_id).toBe("056e4f3e-d505-4dad-8ec1-d04f521cbb56");
+    expect(artist.wikidata_id).toBe("Q185828");
+  });
+});

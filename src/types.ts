@@ -32,6 +32,33 @@ export interface Track {
   subgenre: string[];
 }
 
+/**
+ * A track as embedded in a release, from `GET /v1/releases/:id`.
+ *
+ * Same as {@link Track} minus the `releases` array (the release is the object
+ * you are already looking at), plus this track's position on that release.
+ */
+export interface ReleaseTrack {
+  id: number;
+  title: string;
+  artists: TrackArtist[];
+  isrc: string | null;
+  duration: number | null;
+  /** Canonical genres. Empty array when the track is unclassified. */
+  genre: string[];
+  /** Canonical subgenres. Empty array when none apply. */
+  subgenre: string[];
+  /** Disc the track sits on, counting from 1. Null when the position is unknown. */
+  disc_number: number | null;
+  /**
+   * Position on this release, counting from 1 within its disc. A position
+   * belongs to the pairing of track and release rather than to the track, so
+   * the same recording can be track 6 on an album and track 2 on a
+   * compilation. Null when the position is unknown.
+   */
+  track_number: number | null;
+}
+
 /** A cursor-paginated page. `next_cursor` is null on the last page. */
 export interface Page<T> {
   results: T[];
@@ -41,6 +68,18 @@ export interface Page<T> {
 export interface Artist {
   id: number;
   name: string;
+  /** Country of origin, in English. Null when unknown. */
+  country?: string | null;
+  /** Year the artist or group started, or birth year for a solo act. */
+  formation_year?: number | null;
+  /** Full ISO date, present only when day-level precision is known. */
+  formation_date?: string | null;
+  /** Platform to handle or URL. Which keys appear varies by artist. */
+  social_links?: Record<string, string> | null;
+  /** Wikidata entity ID, e.g. `Q185828`. Null when unmapped. */
+  wikidata_id?: string | null;
+  /** MusicBrainz artist MBID. Null when unmapped. */
+  musicbrainz_id?: string | null;
   [key: string]: unknown;
 }
 
@@ -56,7 +95,11 @@ export interface Release {
   artist?: { id: number; name: string };
   label?: { id: number; name: string } | null;
   release_date?: string | null;
-  tracks?: Track[];
+  /**
+   * The tracklist, in playing order (disc, then track number), with any track
+   * whose position is unknown last.
+   */
+  tracks?: ReleaseTrack[];
   [key: string]: unknown;
 }
 

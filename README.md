@@ -37,6 +37,12 @@ for (const link of links) {
   console.log(link.source, link.url); // spotify https://open.spotify.com/track/...
 }
 
+// An album's tracklist, in playing order
+const release = await sv.releases.get(7);
+for (const t of release.tracks ?? []) {
+  console.log(t.disc_number, t.track_number, t.title); // 1 1 One More Time
+}
+
 // Recording to composition (ISWC), for royalty and publishing workflows
 const work = await sv.tracks.iswc({ isrc: "GBDUW0000053" });
 ```

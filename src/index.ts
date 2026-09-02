@@ -14,6 +14,7 @@ export type {
   PlatformLink,
   PlatformLinksResponse,
   Release,
+  ReleaseTrack,
   ResolveInputType,
   ResolveRequest,
   ResolveResponse,
