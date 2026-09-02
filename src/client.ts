@@ -13,6 +13,8 @@ import type {
   ResolveResponse,
   Stream,
   StreamEvent,
+  StreamStatus,
+  StreamUpdateResponse,
   Track,
   Webhook,
 } from "./types.js";
@@ -287,9 +289,9 @@ export class SonoVault {
     create: (body: Record<string, unknown>) =>
       this.request<Stream>("/v1/streams", { method: "POST", json: body }),
     list: () => this.request<{ streams: Stream[] }>("/v1/streams"),
-    get: (id: string) => this.request<Stream>(`/v1/streams/${id}`),
+    get: (id: string) => this.request<StreamStatus>(`/v1/streams/${id}`),
     update: (id: string, body: Record<string, unknown>) =>
-      this.request<Stream>(`/v1/streams/${id}`, { method: "PATCH", json: body }),
+      this.request<StreamUpdateResponse>(`/v1/streams/${id}`, { method: "PATCH", json: body }),
     history: (id: string, params: { since?: string } = {}) =>
       this.request<Record<string, unknown>>(`/v1/streams/${id}/history`, { query: params }),
     report: (params: { from: string; until: string; stream_id?: string }) =>

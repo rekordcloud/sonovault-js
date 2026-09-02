@@ -26,8 +26,10 @@ export interface Track {
   artists: TrackArtist[];
   isrc: string | null;
   duration: number | null;
-  genre: string | null;
-  subgenre: string | null;
+  /** Canonical genres. Empty array when the track is unclassified. */
+  genre: string[];
+  /** Canonical subgenres. Empty array when none apply. */
+  subgenre: string[];
 }
 
 /** A cursor-paginated page. `next_cursor` is null on the last page. */
@@ -61,7 +63,10 @@ export interface Release {
 export interface Genre {
   id: number;
   name: string;
-  subgenres?: { id: number; name: string }[];
+  /** Whether this is a top-level genre or a subgenre. */
+  type: "main" | "subgenre";
+  /** Name of the parent genre; null for a top-level genre. */
+  parent: string | null;
   [key: string]: unknown;
 }
 
@@ -75,6 +80,8 @@ export interface PlatformLink {
 export interface PlatformLinksResponse {
   track_id: number;
   title: string;
+  /** One representative ISRC for the track; null when none is known. */
+  isrc: string | null;
   links: PlatformLink[];
   [key: string]: unknown;
 }
@@ -137,10 +144,42 @@ export interface IdentifyResponse {
 
 export interface Stream {
   id: string;
-  url?: string;
-  name?: string;
-  status?: string;
+  url: string;
+  name: string | null;
+  status: "active" | "stopped";
+  detection_mode: "precise" | "balanced" | "broad";
+  /** Whether we email you when this stream goes down and when it recovers. */
+  outage_notifications: boolean;
+  created_at: string;
+  stopped_at: string | null;
   [key: string]: unknown;
+}
+
+/**
+ * A stream's live state, as returned by `streams.get()`: the stream fields plus
+ * what is playing right now.
+ */
+export interface StreamStatus extends Stream {
+  /** What the monitor is doing now: `pending`, `running`, `errored` or `stopped`. */
+  runtime_status: string;
+  /** Why it is in that state (e.g. an auth wall on the host); null when it is fine. */
+  status_reason: string | null;
+  /** Null during ad breaks, talk, or audio we cannot place. */
+  now_playing: { track: Track; started_at: string } | null;
+  last_recognized_at: string | null;
+  /** Recognition tuning hint in force; null means auto (all recognisers). */
+  format: "electronic" | "classical" | "pop" | null;
+}
+
+/**
+ * The response to `streams.update()`. The API echoes back only the fields you
+ * changed, so everything but `id` is optional.
+ */
+export interface StreamUpdateResponse {
+  id: string;
+  format?: "electronic" | "classical" | "pop" | null;
+  detection_mode?: "precise" | "balanced" | "broad";
+  outage_notifications?: boolean;
 }
 
 export interface Webhook {

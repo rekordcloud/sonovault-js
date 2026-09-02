@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ## [Unreleased]
 
+### Fixed
+
+- **`Track.genre` and `Track.subgenre` are `string[]`, not `string | null`.** The API has always returned arrays (`["House"]`, and `[]` when unclassified), so the old types described a shape the server never sends.
+- **`Genre` described a response the API does not return.** It declared an optional `subgenres` array and omitted `type` and `parent`. Checked against all 443 rows of `GET /v1/genres`: every row carries exactly `id`, `name`, `type`, `parent`, and none carries `subgenres`.
+- **`streams.update()` no longer claims to return a full `Stream`.** `PATCH /v1/streams/:id` echoes back `id` plus only the fields you changed, which is now its own `StreamUpdateResponse` type.
+
+### Added
+
+- `Stream` declares the fields the API actually returns: `detection_mode`, `outage_notifications`, `created_at`, `stopped_at`, plus proper types for `name` and `status`.
+- `StreamStatus`, the return type of `streams.get()`: adds `runtime_status`, `status_reason`, `now_playing`, `last_recognized_at` and `format` on top of `Stream`.
+- `PlatformLinksResponse.isrc`, returned by `GET /v1/tracks/links` and previously undeclared.
+
 ## [2.0.0] - 2026-08-22
 
 ### Removed

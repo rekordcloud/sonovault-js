@@ -23,8 +23,8 @@ const track = {
   isrc: "GBDUW0000053",
   releases: [],
   duration: 320,
-  genre: "House",
-  subgenre: null,
+  genre: ["House"],
+  subgenre: [],
 };
 
 describe("SonoVault", () => {
