@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-09-02
+
+These are type-only corrections: the runtime behaviour of the client is unchanged. They are a major release because code written against the old, wrong types will no longer compile, which is the point. Nothing about the API changed; the types finally describe what it has always returned.
+
 ### Fixed
 
 - **`Track.genre` and `Track.subgenre` are `string[]`, not `string | null`.** The API has always returned arrays (`["House"]`, and `[]` when unclassified), so the old types described a shape the server never sends.
