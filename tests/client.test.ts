@@ -276,6 +276,38 @@ describe("release tracklists and artist MBID", () => {
     expect(release.tracks?.[0].disc_number).toBeNull();
   });
 
+  it("exposes the release MBID arrays", async () => {
+    const { fetchImpl } = mockFetch([
+      {
+        status: 200,
+        body: {
+          id: 7, title: "Discovery",
+          musicbrainz_release_ids: ["bd3bb36e-16c8-438f-850e-dfbf4d1478f0"],
+          musicbrainz_release_group_ids: ["48117b90-a16e-34ca-a514-19c702df1158"],
+          tracks: [],
+        },
+      },
+    ]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const release = await sv.releases.get(7);
+
+    expect(release.musicbrainz_release_ids).toEqual(["bd3bb36e-16c8-438f-850e-dfbf4d1478f0"]);
+    expect(release.musicbrainz_release_group_ids).toEqual(["48117b90-a16e-34ca-a514-19c702df1158"]);
+  });
+
+  it("returns empty MBID arrays rather than null when unmapped", async () => {
+    const { fetchImpl } = mockFetch([
+      { status: 200, body: { id: 8, title: "Unmapped", musicbrainz_release_ids: [], musicbrainz_release_group_ids: [], tracks: [] } },
+    ]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const release = await sv.releases.get(8);
+
+    expect(release.musicbrainz_release_ids).toEqual([]);
+    expect(release.musicbrainz_release_group_ids).toEqual([]);
+  });
+
   it("exposes musicbrainz_id on an artist", async () => {
     const { fetchImpl } = mockFetch([
       {

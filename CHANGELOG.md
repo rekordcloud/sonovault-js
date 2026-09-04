@@ -5,15 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-09-04
+
 ### Added
 
 - `ReleaseTrack`, the shape `GET /v1/releases/:id` actually returns in `tracks[]`. Same as `Track` without the `releases` array (the release is the object you are already looking at), plus `disc_number` and `track_number`.
 - `Release.tracks` is a `ReleaseTrack[]`, in playing order: disc, then track number, with any track whose position is unknown last.
 - `Artist` declares the public profile fields it has always returned (`country`, `formation_year`, `formation_date`, `social_links`, `wikidata_id`) instead of leaving them to the index signature, and adds `musicbrainz_id`, the MusicBrainz artist MBID.
+- `Release.musicbrainz_release_ids` and `Release.musicbrainz_release_group_ids`, returned by `releases.get()`. Arrays because a SonoVault release groups every edition of an album and each edition carries its own MBID, so you pick the edition you need. Empty when unmapped.
 
 ### Fixed
 
-- **`Release.tracks` was typed `Track[]`.** That shape has a `releases` array, which this endpoint has never returned, so code reading `release.tracks[0].releases` type-checked and was `undefined` at runtime. Correcting it to `ReleaseTrack[]` will stop that code compiling, which is the point. Same class of type-only correction as 3.0.0, so it needs a major bump on release.
+- **`Release.tracks` was typed `Track[]`.** That shape has a `releases` array, which this endpoint has never returned, so code reading `release.tracks[0].releases` type-checked and was `undefined` at runtime. Correcting it to `ReleaseTrack[]` will stop that code compiling, which is the point. Same class of type-only correction as 3.0.0, hence the major bump.
 
 ## [3.0.0] - 2026-09-02
 

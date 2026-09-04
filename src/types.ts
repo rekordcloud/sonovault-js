@@ -96,6 +96,19 @@ export interface Release {
   label?: { id: number; name: string } | null;
   release_date?: string | null;
   /**
+   * MusicBrainz release MBIDs, sorted. An array rather than a single value
+   * because a SonoVault release groups every edition of an album and each
+   * edition carries its own MBID, so you can pick the edition you need. Empty
+   * when unmapped. Only returned by `releases.get()`.
+   */
+  musicbrainz_release_ids?: string[];
+  /**
+   * MusicBrainz release-group MBIDs: the identity of the album across all its
+   * editions, as opposed to any one pressing. Usually a single entry. Empty
+   * when unmapped. Only returned by `releases.get()`.
+   */
+  musicbrainz_release_group_ids?: string[];
+  /**
    * The tracklist, in playing order (disc, then track number), with any track
    * whose position is unknown last.
    */
