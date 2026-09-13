@@ -262,7 +262,13 @@ export class SonoVault {
   readonly releases = {
     search: (params: { title: string; artist?: string; limit?: number; cursor?: string }) =>
       this.request<Page<Release>>("/v1/releases/search", { query: params }),
-    get: (id: number) => this.request<Release>(`/v1/releases/${id}`),
+    /**
+     * One release with its tracklist and the editions behind it. Pass
+     * `edition` (an `id` from the response's `editions`) to render that
+     * edition's track numbering instead of the default consensus.
+     */
+    get: (id: number, params: { edition?: number } = {}) =>
+      this.request<Release>(`/v1/releases/${id}`, { query: params }),
     /** Newly released albums (GET /v1/releases/new). Paid tiers. */
     latest: (params: { limit?: number; cursor?: string } = {}) =>
       this.request<Page<Release>>("/v1/releases/new", { query: params }),

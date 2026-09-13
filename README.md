@@ -43,6 +43,12 @@ for (const t of release.tracks ?? []) {
   console.log(t.disc_number, t.track_number, t.title); // 1 1 One More Time
 }
 
+// One record groups every edition of an album, so pick the one you mean
+for (const e of release.editions ?? []) {
+  console.log(e.id, e.format, e.release_date, e.track_count); // 16216 cd 2001-03-12 14
+}
+const deluxe = await sv.releases.get(7, { edition: 16216 });
+
 // Recording to composition (ISWC), for royalty and publishing workflows
 const work = await sv.tracks.iswc({ isrc: "GBDUW0000053" });
 ```

@@ -110,10 +110,69 @@ export interface Release {
   musicbrainz_release_group_ids?: string[];
   /**
    * The tracklist, in playing order (disc, then track number), with any track
-   * whose position is unknown last.
+   * whose position is unknown last. Numbering comes from the edition named by
+   * `edition`, or from a consensus across the release's editions when none was
+   * named.
    */
   tracks?: ReleaseTrack[];
+  /**
+   * The real editions behind this release, at most 20. A SonoVault release
+   * groups every edition of an album onto one record, so the single, the
+   * album, the deluxe and the box set share one ID; these are the editions
+   * behind it. Chosen so each is a genuinely different edition rather than
+   * twenty pressings of the same one. Only returned by `releases.get()`.
+   */
+  editions?: ReleaseEdition[];
+  /**
+   * The edition whose numbering `tracks` uses. `null` unless an edition was
+   * requested. Only returned by `releases.get()`.
+   */
+  edition?: number | null;
   [key: string]: unknown;
+}
+
+/**
+ * One real edition behind a release: a specific pressing, issue or digital
+ * album as one provider describes it. Pass its `id` to
+ * `releases.get(id, { edition })` to render that edition's track numbering.
+ */
+export interface ReleaseEdition {
+  id: number;
+  /** The provider describing this edition. */
+  source: "spotify" | "discogs" | "musicbrainz";
+  /** The edition's ID at that provider. */
+  external_id: string;
+  /**
+   * The provider's identity for the album across all its editions: a
+   * MusicBrainz release-group MBID or a Discogs master ID. `null` for Spotify,
+   * which has no such concept.
+   */
+  group_external_id: string | null;
+  /** The edition's own title, which often carries what makes it distinct. */
+  title: string | null;
+  edition_kind: "album" | "single" | "ep" | "compilation" | "live" | "remix" | "soundtrack" | "other" | null;
+  format: "cd" | "vinyl" | "cassette" | "digital" | "dvd" | "mixed" | "other" | null;
+  /** `false` for a release the provider marks unofficial, such as a bootleg. */
+  official: boolean | null;
+  /**
+   * The edition's release date, `YYYY-MM-DD`. Read it with `date_precision`: a
+   * month-precision date is reported as the first of the month.
+   */
+  release_date: string | null;
+  date_precision: "day" | "month" | "year" | null;
+  /** Barcode or UPC, digits only, so editions can be matched across providers. */
+  barcode: string | null;
+  /** Where the edition was issued, as the provider names it. Not an ISO code. */
+  country: string | null;
+  /** How many discs, records or tapes the edition spans. */
+  medium_count: number | null;
+  /**
+   * The provider's own total for the edition, including tracks SonoVault does
+   * not hold. Compare with `tracks_on_row` to see the gap.
+   */
+  track_count: number | null;
+  /** How many of this release's tracks sit on the edition. */
+  tracks_on_row: number;
 }
 
 export interface Genre {
