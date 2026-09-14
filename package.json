@@ -1,7 +1,7 @@
 {
   "name": "sonovault",
-  "version": "4.0.0",
-  "description": "TypeScript/Node client for the SonoVault music metadata API — ISRC, ISWC, genre, labels, release dates, and cross-platform IDs for 93M+ tracks.",
+  "version": "4.1.0",
+  "description": "TypeScript/Node client for the SonoVault music metadata API \u2014 ISRC, ISWC, genre, labels, release dates, and cross-platform IDs for 93M+ tracks.",
   "keywords": [
     "music",
     "metadata",
