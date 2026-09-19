@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-09-19
+
 ### Added
 
 - `label` and `catalog_no` on each `ReleaseEdition`: the label that issued that pressing and its catalog number. Pressings of one album often differ (the UK original and a US reissue each carry their own), which the single release-level `label` cannot show.
