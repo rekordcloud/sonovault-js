@@ -65,6 +65,16 @@ export interface Page<T> {
   next_cursor: string | null;
 }
 
+/** Query params for an artist's or a label's release list. */
+export type ReleaseListParams = {
+  limit?: number;
+  cursor?: string;
+  /** Only releases dated on or after this day (`YYYY-MM-DD`). Undated releases are left out when `from` or `until` is set. */
+  from?: string;
+  /** Only releases dated on or before this day (`YYYY-MM-DD`). Pass the same day as `from` for a single release date. */
+  until?: string;
+};
+
 export interface Artist {
   id: number;
   name: string;

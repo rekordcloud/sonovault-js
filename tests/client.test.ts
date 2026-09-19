@@ -45,6 +45,20 @@ describe("SonoVault", () => {
     expect((calls[0].init.headers as Record<string, string>)["x-api-key"]).toBe("svk_test");
   });
 
+  it("passes from / until to the label and artist release lists", async () => {
+    const { fetchImpl, calls } = mockFetch([{ status: 200, body: { results: [], next_cursor: null } }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    await sv.labels.releases(11933, { from: "2026-09-11", until: "2026-09-11" });
+    await sv.artists.releases(42, { from: "2001-01-01" });
+
+    expect(calls[0].url).toContain("/v1/labels/11933/releases?");
+    expect(calls[0].url).toContain("from=2026-09-11");
+    expect(calls[0].url).toContain("until=2026-09-11");
+    expect(calls[1].url).toContain("/v1/artists/42/releases?from=2001-01-01");
+    expect(calls[1].url).not.toContain("until");
+  });
+
   it("omits undefined query params", async () => {
     const { fetchImpl, calls } = mockFetch([{ status: 200, body: { results: [], next_cursor: null } }]);
     const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });

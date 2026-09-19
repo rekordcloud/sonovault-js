@@ -9,6 +9,7 @@ import type {
   Page,
   PlatformLinksResponse,
   Release,
+  ReleaseListParams,
   ResolveRequest,
   ResolveResponse,
   Stream,
@@ -245,7 +246,8 @@ export class SonoVault {
     search: (params: { name: string; limit?: number; cursor?: string }) =>
       this.request<Page<Artist>>("/v1/artists/search", { query: params }),
     get: (id: number) => this.request<Artist>(`/v1/artists/${id}`),
-    releases: (id: number, params: { limit?: number; cursor?: string } = {}) =>
+    /** An artist's releases, newest first. `from` / `until` are inclusive `YYYY-MM-DD` release dates. */
+    releases: (id: number, params: ReleaseListParams = {}) =>
       this.request<Page<Release>>(`/v1/artists/${id}/releases`, { query: params }),
   };
 
@@ -253,7 +255,11 @@ export class SonoVault {
     search: (params: { name: string; limit?: number; cursor?: string }) =>
       this.request<Page<Label>>("/v1/labels/search", { query: params }),
     get: (id: number) => this.request<Label>(`/v1/labels/${id}`),
-    releases: (id: number, params: { limit?: number; cursor?: string } = {}) =>
+    /**
+     * A label's releases, newest first. `from` / `until` are inclusive `YYYY-MM-DD`
+     * release dates, so `{ from: "2026-09-11", until: "2026-09-11" }` lists one day.
+     */
+    releases: (id: number, params: ReleaseListParams = {}) =>
       this.request<Page<Release>>(`/v1/labels/${id}/releases`, { query: params }),
     artists: (id: number, params: { limit?: number; cursor?: string } = {}) =>
       this.request<Page<Artist>>(`/v1/labels/${id}/artists`, { query: params }),

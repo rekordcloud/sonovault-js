@@ -51,6 +51,9 @@ const deluxe = await sv.releases.get(7, { edition: 16216 });
 
 // Recording to composition (ISWC), for royalty and publishing workflows
 const work = await sv.tracks.iswc({ isrc: "GBDUW0000053" });
+
+// What a label released on one day (from / until are inclusive YYYY-MM-DD)
+const friday = await sv.labels.releases(1, { from: "2026-09-11", until: "2026-09-11" });
 ```
 
 ## Bulk resolve
