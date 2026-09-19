@@ -7,6 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ### Added
 
+- `label` and `catalog_no` on each `ReleaseEdition`: the label that issued that pressing and its catalog number. Pressings of one album often differ (the UK original and a US reissue each carry their own), which the single release-level `label` cannot show.
 - `from` and `until` on `artists.releases()` and `labels.releases()`: inclusive `YYYY-MM-DD` release-date bounds, so `labels.releases(id, { from: "2026-09-11", until: "2026-09-11" })` lists what a label released that day. Undated releases are left out when either is set. The params are typed by the new `ReleaseListParams`.
 
 ## [4.1.0] - 2026-09-14

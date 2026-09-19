@@ -183,6 +183,13 @@ export interface ReleaseEdition {
   track_count: number | null;
   /** How many of this release's tracks sit on the edition. */
   tracks_on_row: number;
+  /**
+   * The label that issued this pressing, as the provider names it. Pressings of
+   * one album often differ: the UK original and a US reissue each carry their own.
+   */
+  label: { id: number; name: string } | null;
+  /** The pressing's catalog number, from Discogs and MusicBrainz. */
+  catalog_no: string | null;
 }
 
 export interface Genre {
