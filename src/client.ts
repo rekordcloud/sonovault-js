@@ -203,6 +203,7 @@ export class SonoVault {
       isrc?: string;
       spotify_id?: string;
       beatport_id?: string;
+      /** Discogs track key: release ID plus track position, e.g. `2844-A`. A bare release ID matches nothing. */
       discogs_id?: string;
       musicbrainz_id?: string;
       applemusic_id?: string;

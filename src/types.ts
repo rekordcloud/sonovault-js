@@ -239,7 +239,11 @@ export type ResolveInputType =
 
 export interface ResolveRequest {
   input_type: ResolveInputType;
-  /** 1–100 entries. `{ artist, title }` objects for `track_name`, strings otherwise. */
+  /**
+   * 1–100 entries. `{ artist, title }` objects for `track_name`, strings otherwise.
+   * For `discogs_id` each string is a Discogs track key (release ID plus track
+   * position, e.g. `2844-A`), not a bare release ID.
+   */
   items: (string | { artist: string; title: string })[];
 }
 
