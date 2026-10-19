@@ -59,7 +59,7 @@ const friday = await sv.labels.releases(1, { from: "2026-09-11", until: "2026-09
 
 ## Key and BPM
 
-Every track (search, lookups, browse, resolve, release tracklists, stream events) carries its tempo and musical key. Key comes from OpenKeyScan and BPM from the Lexicon beat detector (trusted by 100k+ DJs), both run by SonoVault on the audio.
+Every track (search, lookups, browse, resolve, release tracklists, stream events) carries its tempo and musical key. Key comes from OpenKeyScan and BPM from the Lexicon DJ beat detector (trusted by 100k+ DJs), both run by SonoVault on the audio.
 
 ```ts
 const track = await sv.tracks.byIsrc("GBDUW0000053"); // Daft Punk, One More Time
