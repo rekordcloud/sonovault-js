@@ -9,6 +9,7 @@ export type {
   IdentifyResponse,
   IdentifyResult,
   IswcLookupResponse,
+  KeySource,
   Label,
   Page,
   PlatformLink,
@@ -27,6 +28,7 @@ export type {
   StreamUpdateResponse,
   Track,
   TrackArtist,
+  TrackKey,
   TrackRelease,
   Webhook,
 } from "./types.js";

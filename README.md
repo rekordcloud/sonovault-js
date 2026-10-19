@@ -3,7 +3,7 @@
 [![CI](https://github.com/rekordcloud/sonovault-js/actions/workflows/ci.yml/badge.svg)](https://github.com/rekordcloud/sonovault-js/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/sonovault)](https://www.npmjs.com/package/sonovault)
 
-TypeScript/Node client for the **[SonoVault](https://sonovault.now)** music metadata API. 93M+ tracks with ISRC, ISWC, genre, record label, canonical release dates, and cross-platform IDs for Spotify, Apple Music, Tidal, Beatport, Discogs, and MusicBrainz. One call resolves them all.
+TypeScript/Node client for the **[SonoVault](https://sonovault.now)** music metadata API. 93M+ tracks with ISRC, ISWC, genre, BPM, musical key, record label, canonical release dates, and cross-platform IDs for Spotify, Apple Music, Tidal, Beatport, Discogs, and MusicBrainz. One call resolves them all.
 
 - **One key, no OAuth.** A single `x-api-key` header, no approval queue.
 - **Free tier.** 1,000 requests/month, no credit card: [get an API key](https://sonovault.now).
@@ -30,6 +30,7 @@ const sv = new SonoVault({ apiKey: process.env.SONOVAULT_API_KEY! });
 const { results } = await sv.tracks.search({ artist: "Daft Punk", title: "One More Time" });
 console.log(results[0].isrc); // "GBDUW0000053"
 console.log(results[0].genre, results[0].releases[0]?.label?.name);
+console.log(results[0].bpm, results[0].key_alphanumeric); // 123 "10B"
 
 // Resolve that ISRC to its ID on every platform
 const { links } = await sv.tracks.links({ isrc: "GBDUW0000053" });
@@ -55,6 +56,26 @@ const work = await sv.tracks.iswc({ isrc: "GBDUW0000053" });
 // What a label released on one day (from / until are inclusive YYYY-MM-DD)
 const friday = await sv.labels.releases(1, { from: "2026-09-11", until: "2026-09-11" });
 ```
+
+## Key and BPM
+
+Every track (search, lookups, browse, resolve, release tracklists, stream events) carries its tempo and musical key. Key comes from OpenKeyScan and BPM from the Lexicon beat detector (trusted by 100k+ DJs), both run by SonoVault on the audio.
+
+```ts
+const track = await sv.tracks.byIsrc("GBDUW0000053"); // Daft Punk, One More Time
+
+track.bpm;              // 123 (full tempo, up to 2 decimals)
+track.key_alphanumeric; // "10B" (1 to 12, A = minor, B = major)
+track.key_musical;      // "D"
+track.key_open;         // "3d" (Open Key notation)
+
+// Every key we hold, one entry per source
+for (const k of track.keys) {
+  console.log(k.source, k.key_alphanumeric); // openkeyscan 10B
+}
+```
+
+All of these are `null` (and `keys` is `[]`) when a track has not been analysed yet. Other audio features such as energy or danceability are not exposed.
 
 ## Bulk resolve
 

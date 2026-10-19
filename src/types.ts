@@ -16,8 +16,27 @@ export interface TrackRelease {
 }
 
 /**
- * The public track shape returned by search, lookups, and resolve.
- * Note: audio features (BPM, key, energy, …) are not exposed on the public API.
+ * Where a key estimate came from. Only `"openkeyscan"` today; more sources may
+ * be added, so treat unknown values as valid.
+ */
+export type KeySource = "openkeyscan" | (string & {});
+
+/** One musical key estimate for a track, in all three notations. */
+export interface TrackKey {
+  /** Alphanumeric key: 1 to 12 plus `A` (minor) or `B` (major), e.g. `"10B"`. */
+  key_alphanumeric: string;
+  /** Musical notation, e.g. `"D"`, `"Am"`, `"F#m"`, `"Ebm"`. */
+  key_musical: string;
+  /** Open Key notation, lowercase, e.g. `"3d"`, `"1m"`. */
+  key_open: string;
+  /** Which analyser produced this key. */
+  source: KeySource;
+}
+
+/**
+ * The public track shape returned by search, lookups, browse, resolve, and
+ * stream events. BPM and musical key are included (`bpm`, `key_*`, `keys`);
+ * other audio features such as energy or danceability are not exposed.
  */
 export interface Track {
   id: number;
@@ -26,6 +45,19 @@ export interface Track {
   artists: TrackArtist[];
   isrc: string | null;
   duration: number | null;
+  /**
+   * Tempo in beats per minute, up to 2 decimals. Full tempo (174, not 87).
+   * Null when the track has not been analysed.
+   */
+  bpm: number | null;
+  /** Alphanumeric key, e.g. `"10B"`. Null when the track has not been analysed. */
+  key_alphanumeric: string | null;
+  /** Musical key, e.g. `"D"` or `"F#m"`. Null when the track has not been analysed. */
+  key_musical: string | null;
+  /** Open Key notation, e.g. `"3d"`. Null when the track has not been analysed. */
+  key_open: string | null;
+  /** Every key we hold for the track, one per source. Empty when not analysed. */
+  keys: TrackKey[];
   /** Canonical genres. Empty array when the track is unclassified. */
   genre: string[];
   /** Canonical subgenres. Empty array when none apply. */
@@ -44,6 +76,19 @@ export interface ReleaseTrack {
   artists: TrackArtist[];
   isrc: string | null;
   duration: number | null;
+  /**
+   * Tempo in beats per minute, up to 2 decimals. Full tempo (174, not 87).
+   * Null when the track has not been analysed.
+   */
+  bpm: number | null;
+  /** Alphanumeric key, e.g. `"10B"`. Null when the track has not been analysed. */
+  key_alphanumeric: string | null;
+  /** Musical key, e.g. `"D"` or `"F#m"`. Null when the track has not been analysed. */
+  key_musical: string | null;
+  /** Open Key notation, e.g. `"3d"`. Null when the track has not been analysed. */
+  key_open: string | null;
+  /** Every key we hold for the track, one per source. Empty when not analysed. */
+  keys: TrackKey[];
   /** Canonical genres. Empty array when the track is unclassified. */
   genre: string[];
   /** Canonical subgenres. Empty array when none apply. */

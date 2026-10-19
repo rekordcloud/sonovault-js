@@ -5,6 +5,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ## [Unreleased]
 
+## [4.3.0] - 2026-10-19
+
+### Added
+
+- BPM and musical key on every `Track` and `ReleaseTrack`: `bpm` (full tempo, up to 2 decimals), `key_alphanumeric` (e.g. `"10B"`), `key_musical` (e.g. `"D"`, `"F#m"`) and `key_open` (Open Key, e.g. `"3d"`). Each is `null` when the track has not been analysed. Key comes from OpenKeyScan and BPM from the Lexicon beat detector, both run by SonoVault on the audio.
+- `keys`, every key estimate held for a track, one per source, typed by the new `TrackKey` interface. Its `source` is typed by the new `KeySource`, currently `"openkeyscan"`; unknown values are allowed so new sources do not break your build. Empty when the track has not been analysed.
+
+### Changed
+
+- The `Track` doc comment no longer says audio features are not exposed. BPM and key are; energy, danceability and similar features are not.
+
 ## [4.2.1] - 2026-09-25
 
 ### Changed

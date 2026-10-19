@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { SonoVault, SonoVaultError, paginate, verifyWebhookSignature } from "../src/index.js";
+import type { KeySource, Track, TrackKey } from "../src/index.js";
 
 function mockFetch(responses: Array<{ status: number; body?: unknown; headers?: Record<string, string> }>) {
   let call = 0;
@@ -23,9 +24,14 @@ const track = {
   isrc: "GBDUW0000053",
   releases: [],
   duration: 320,
+  bpm: 123,
+  key_alphanumeric: "10B",
+  key_musical: "D",
+  key_open: "3d",
+  keys: [{ key_alphanumeric: "10B", key_musical: "D", key_open: "3d", source: "openkeyscan" }],
   genre: ["House"],
   subgenre: [],
-};
+} satisfies Track;
 
 describe("SonoVault", () => {
   it("requires an apiKey", () => {
@@ -256,8 +262,8 @@ describe("release tracklists and artist MBID", () => {
           id: 7, title: "Discovery",
           artist: { id: 1, name: "Daft Punk" },
           tracks: [
-            { id: 1, title: "One More Time", artists: [], isrc: null, duration: 320, genre: [], subgenre: [], disc_number: 1, track_number: 1 },
-            { id: 2, title: "Aerodynamic", artists: [], isrc: null, duration: 212, genre: [], subgenre: [], disc_number: 1, track_number: 2 },
+            { id: 1, title: "One More Time", artists: [], isrc: null, duration: 320, bpm: 123, key_alphanumeric: "10B", key_musical: "D", key_open: "3d", keys: [{ key_alphanumeric: "10B", key_musical: "D", key_open: "3d", source: "openkeyscan" }], genre: [], subgenre: [], disc_number: 1, track_number: 1 },
+            { id: 2, title: "Aerodynamic", artists: [], isrc: null, duration: 212, bpm: null, key_alphanumeric: null, key_musical: null, key_open: null, keys: [], genre: [], subgenre: [], disc_number: 1, track_number: 2 },
           ],
         },
       },
@@ -277,7 +283,7 @@ describe("release tracklists and artist MBID", () => {
         body: {
           id: 7, title: "Partly Positioned",
           tracks: [
-            { id: 1, title: "Unknown Slot", artists: [], isrc: null, duration: null, genre: [], subgenre: [], disc_number: null, track_number: null },
+            { id: 1, title: "Unknown Slot", artists: [], isrc: null, duration: null, bpm: null, key_alphanumeric: null, key_musical: null, key_open: null, keys: [], genre: [], subgenre: [], disc_number: null, track_number: null },
           ],
         },
       },
@@ -340,5 +346,63 @@ describe("release tracklists and artist MBID", () => {
 
     expect(artist.musicbrainz_id).toBe("056e4f3e-d505-4dad-8ec1-d04f521cbb56");
     expect(artist.wikidata_id).toBe("Q185828");
+  });
+});
+
+describe("BPM and musical key", () => {
+  it("passes bpm, the three key notations, and keys[] through on a track", async () => {
+    const { fetchImpl } = mockFetch([{ status: 200, body: track }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const t: Track = await sv.tracks.get(123);
+
+    const bpm: number | null = t.bpm;
+    const alphanumeric: string | null = t.key_alphanumeric;
+    expect(bpm).toBe(123);
+    expect(alphanumeric).toBe("10B");
+    expect(t.key_musical).toBe("D");
+    expect(t.key_open).toBe("3d");
+    const first: TrackKey = t.keys[0];
+    const source: KeySource = first.source;
+    expect(source).toBe("openkeyscan");
+    expect(first).toEqual({ key_alphanumeric: "10B", key_musical: "D", key_open: "3d", source: "openkeyscan" });
+  });
+
+  it("accepts a key source the client does not know yet", () => {
+    const k: TrackKey = { key_alphanumeric: "8A", key_musical: "Am", key_open: "1m", source: "some-future-source" };
+    expect(k.source).toBe("some-future-source");
+  });
+
+  it("keeps an unanalysed track null / empty", async () => {
+    const unanalysed = { ...track, bpm: null, key_alphanumeric: null, key_musical: null, key_open: null, keys: [] };
+    const { fetchImpl } = mockFetch([{ status: 200, body: { results: [unanalysed], next_cursor: null } }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const { results } = await sv.tracks.search({ artist: "Daft Punk", title: "One More Time" });
+
+    expect(results[0].bpm).toBeNull();
+    expect(results[0].key_alphanumeric).toBeNull();
+    expect(results[0].keys).toEqual([]);
+  });
+
+  it("carries bpm and key on release tracklist entries", async () => {
+    const { fetchImpl } = mockFetch([
+      {
+        status: 200,
+        body: {
+          id: 7, title: "Discovery",
+          tracks: [
+            { id: 1, title: "One More Time", artists: [], isrc: null, duration: 320, bpm: 123, key_alphanumeric: "10B", key_musical: "D", key_open: "3d", keys: [{ key_alphanumeric: "10B", key_musical: "D", key_open: "3d", source: "openkeyscan" }], genre: [], subgenre: [], disc_number: 1, track_number: 1 },
+          ],
+        },
+      },
+    ]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const release = await sv.releases.get(7);
+
+    expect(release.tracks?.[0].bpm).toBe(123);
+    expect(release.tracks?.[0].key_musical).toBe("D");
+    expect(release.tracks?.[0].keys[0].source).toBe("openkeyscan");
   });
 });
