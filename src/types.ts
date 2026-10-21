@@ -358,6 +358,8 @@ export interface StreamStatus extends Stream {
  */
 export interface StreamUpdateResponse {
   id: string;
+  /** The stream URL now in force, as stored (it may be normalised). */
+  url?: string;
   format?: "electronic" | "classical" | "pop" | null;
   detection_mode?: "precise" | "balanced" | "broad";
   outage_notifications?: boolean;

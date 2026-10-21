@@ -303,6 +303,11 @@ export class SonoVault {
       this.request<Stream>("/v1/streams", { method: "POST", json: body }),
     list: () => this.request<{ streams: Stream[] }>("/v1/streams"),
     get: (id: string) => this.request<StreamStatus>(`/v1/streams/${id}`),
+    /**
+     * Change a stream's `url`, `format`, `detection_mode` and/or
+     * `outage_notifications`. A new `url` keeps the stream's id, history and
+     * billing. Paid tiers.
+     */
     update: (id: string, body: Record<string, unknown>) =>
       this.request<StreamUpdateResponse>(`/v1/streams/${id}`, { method: "PATCH", json: body }),
     history: (id: string, params: { since?: string } = {}) =>
