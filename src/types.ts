@@ -267,7 +267,12 @@ export interface PlatformLinksResponse {
 export interface IswcLookupResponse {
   sonovault_id?: number;
   isrc?: string;
-  iswcs?: { iswc: string; title: string | null }[];
+  /**
+   * By ISRC: the works a source links to that exact ISRC (`basis: "isrc"`),
+   * or, when none is stated, every work on the recording (`basis: "recording"`).
+   * By id: every work on the recording.
+   */
+  iswcs?: { iswc: string; title: string | null; basis?: "isrc" | "recording" }[];
   [key: string]: unknown;
 }
 
