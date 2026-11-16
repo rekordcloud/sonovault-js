@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ## [Unreleased]
 
+## [4.5.1] - 2026-11-16
+
+### Fixed
+
+- `VERSION` (and the User-Agent the client sends) still said 4.4.0 in the 4.5.0 package. No API change.
+
 ## [4.5.0] - 2026-11-16
 
 ### Added
