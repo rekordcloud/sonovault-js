@@ -183,6 +183,15 @@ export interface Release {
    * requested. Only returned by `releases.get()`.
    */
   edition?: number | null;
+  /**
+   * The UPC the release was delivered to digital stores with, picked from its
+   * digital editions (Beatport, then Apple Music, then Spotify, then
+   * MusicBrainz and Discogs digital editions whose title matches the release).
+   * 12 digits (UPC-A) when it fits, otherwise the 13-digit EAN. `null` when no
+   * digital edition carries one. Returned by `releases.get()` and
+   * `releases.new()`.
+   */
+  digital_upc?: string | null;
   [key: string]: unknown;
 }
 
@@ -194,7 +203,7 @@ export interface Release {
 export interface ReleaseEdition {
   id: number;
   /** The provider describing this edition. */
-  source: "spotify" | "discogs" | "musicbrainz";
+  source: "spotify" | "discogs" | "musicbrainz" | "beatport" | "applemusic";
   /** The edition's ID at that provider. */
   external_id: string;
   /**
@@ -233,7 +242,7 @@ export interface ReleaseEdition {
    * one album often differ: the UK original and a US reissue each carry their own.
    */
   label: { id: number; name: string } | null;
-  /** The pressing's catalog number, from Discogs and MusicBrainz. */
+  /** The pressing's catalog number, from Discogs, MusicBrainz and Beatport. */
   catalog_no: string | null;
 }
 

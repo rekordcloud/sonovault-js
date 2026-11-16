@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ## [Unreleased]
 
+## [4.5.0] - 2026-11-16
+
+### Added
+
+- `Release.digital_upc`: the UPC a release was delivered to digital stores with, on `releases.get()` and on every result of `releases.new()`. A release groups every edition of an album (CD, vinyl, reissues, the digital album), so it often carries several barcodes; this is the one from a digital edition whose title matches the release, preferring Beatport, then Apple Music, then Spotify, then MusicBrainz and Discogs digital editions. 12 digits (UPC-A) when it fits, otherwise the 13-digit EAN. `null` when no digital edition carries one. Every barcode stays available per edition in `editions`.
+- `ReleaseEdition.source` can now also be `"beatport"` or `"applemusic"`.
+
 ## [4.4.0] - 2026-10-21
 
 ### Added
