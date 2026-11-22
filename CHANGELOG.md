@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 
 ## [Unreleased]
 
+## [4.6.0] - 2026-11-22
+
+### Added
+
+- `releases.byUpc(upc)` (`GET /v1/releases/upc/:upc`): the release behind a UPC, EAN or GTIN barcode. Accepts 8 to 14 digits with optional spaces and hyphens, and a 12-digit UPC-A finds the same release as its 13-digit EAN form. Only barcodes with title evidence on the release are matched. Rejects with status 404 when nothing carries the barcode. Free tier. New types `UpcLookupResponse` and `UpcLookupResult`.
+- `Release.digital_upc` is now also returned on every result of `releases.search()`, so an artist and album title are enough to get a UPC.
+
 ## [4.5.1] - 2026-11-16
 
 ### Fixed

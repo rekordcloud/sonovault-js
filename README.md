@@ -50,6 +50,12 @@ for (const e of release.editions ?? []) {
 }
 const deluxe = await sv.releases.get(7, { edition: 16216 });
 
+// Find an album's UPC from its name, or the release behind a barcode
+const [found] = (await sv.releases.search({ title: "Discovery", artist: "Daft Punk" })).results;
+console.log(found.digital_upc); // 724384960650
+const byBarcode = await sv.releases.byUpc("724384960650"); // UPC-A or EAN-13, 404 if unknown
+console.log(byBarcode.results[0].title); // Discovery
+
 // Recording to composition (ISWC), for royalty and publishing workflows
 const work = await sv.tracks.iswc({ isrc: "GBDUW0000053" });
 
@@ -148,7 +154,7 @@ Runnable scripts live in [`examples/`](examples/): find an ISRC, resolve cross-p
 | `sv.tracks` | `search`, `get`, `byIsrc`, `iswc`, `byIswc`, `links`, `resolve`, `identifyAudio`, `browse` |
 | `sv.artists` | `search`, `get`, `releases` |
 | `sv.labels` | `search`, `get`, `releases`, `artists` |
-| `sv.releases` | `search`, `get`, `latest` |
+| `sv.releases` | `search`, `get`, `byUpc`, `latest` |
 | `sv.genres` | `list` |
 | `sv.suggestions` | `submit`, `list` |
 | `sv.streams` | `create`, `list`, `get`, `update`, `history`, `report`, `live`, `stop` |

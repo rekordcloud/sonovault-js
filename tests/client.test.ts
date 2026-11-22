@@ -276,6 +276,35 @@ describe("release tracklists and artist MBID", () => {
     expect(release.tracks?.[0].disc_number).toBe(1);
   });
 
+  it("looks a release up by UPC, encoding the barcode into the path", async () => {
+    const { fetchImpl, calls } = mockFetch([
+      {
+        status: 200,
+        body: {
+          upc: "724384960650",
+          results: [
+            { id: 1384, title: "Discovery", artist: { id: 1, name: "Daft Punk" }, label: { id: 10, name: "Virgin Records" }, release_date: "2001-03-12", digital_upc: "724384960650", formats: ["digital"] },
+          ],
+        },
+      },
+    ]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl });
+
+    const res = await sv.releases.byUpc("724384960650");
+
+    expect(calls[0].url).toContain("/v1/releases/upc/724384960650");
+    expect(res.upc).toBe("724384960650");
+    expect(res.results[0].title).toBe("Discovery");
+    expect(res.results[0].formats).toEqual(["digital"]);
+  });
+
+  it("rejects releases.byUpc with a 404 SonoVaultError when no release carries the barcode", async () => {
+    const { fetchImpl } = mockFetch([{ status: 404, body: { error: "No release found for that UPC" } }]);
+    const sv = new SonoVault({ apiKey: "svk_test", fetch: fetchImpl, maxRetries: 0 });
+
+    await expect(sv.releases.byUpc("012345678905")).rejects.toMatchObject({ status: 404 });
+  });
+
   it("keeps a null position null rather than coercing it to 0", async () => {
     const { fetchImpl } = mockFetch([
       {

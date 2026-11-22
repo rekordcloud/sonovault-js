@@ -189,7 +189,7 @@ export interface Release {
    * MusicBrainz and Discogs digital editions whose title matches the release).
    * 12 digits (UPC-A) when it fits, otherwise the 13-digit EAN. `null` when no
    * digital edition carries one. Returned by `releases.get()` and
-   * `releases.new()`.
+   * `releases.latest()`, and on every result of `releases.search()`.
    */
   digital_upc?: string | null;
   [key: string]: unknown;
@@ -405,4 +405,29 @@ export interface StreamEvent {
     [key: string]: unknown;
   };
   [key: string]: unknown;
+}
+
+/** One release carrying the barcode you looked up, from `releases.byUpc()`. */
+export interface UpcLookupResult {
+  id: number;
+  title: string;
+  artist: { id: number; name: string };
+  label: { id: number; name: string } | null;
+  release_date: string | null;
+  /**
+   * The UPC the release was delivered to digital stores with. Often the same
+   * as the barcode you asked for, but a release can carry several (CD, vinyl,
+   * reissue). `null` when no digital edition carries one.
+   */
+  digital_upc: string | null;
+  /** Formats of the editions that carry this barcode (`cd`, `vinyl`, `digital`, ...). */
+  formats: string[];
+}
+
+/** Response of `releases.byUpc()`. */
+export interface UpcLookupResponse {
+  /** The barcode, normalised: 12 digits (UPC-A) when it fits, otherwise the 13 or 14 digit EAN/GTIN. */
+  upc: string;
+  /** The releases that carry it, oldest first, at most 25. Usually one. */
+  results: UpcLookupResult[];
 }

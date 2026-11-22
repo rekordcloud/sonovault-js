@@ -10,6 +10,7 @@ import type {
   PlatformLinksResponse,
   Release,
   ReleaseListParams,
+  UpcLookupResponse,
   ResolveRequest,
   ResolveResponse,
   Stream,
@@ -276,6 +277,15 @@ export class SonoVault {
      */
     get: (id: number, params: { edition?: number } = {}) =>
       this.request<Release>(`/v1/releases/${id}`, { query: params }),
+    /**
+     * The release behind a UPC, EAN or GTIN barcode (GET /v1/releases/upc/:upc).
+     * Accepts 8 to 14 digits (spaces and hyphens are ignored); a 12-digit UPC-A
+     * and its 13-digit EAN form with a leading zero find the same release.
+     * Throws `SonoVaultError` with status 404 when no release carries the
+     * barcode. Free tier.
+     */
+    byUpc: (upc: string) =>
+      this.request<UpcLookupResponse>(`/v1/releases/upc/${encodeURIComponent(upc)}`),
     /** Newly released albums (GET /v1/releases/new). Paid tiers. */
     latest: (params: { limit?: number; cursor?: string } = {}) =>
       this.request<Page<Release>>("/v1/releases/new", { query: params }),

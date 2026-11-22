@@ -30,5 +30,7 @@ export type {
   TrackArtist,
   TrackKey,
   TrackRelease,
+  UpcLookupResponse,
+  UpcLookupResult,
   Webhook,
 } from "./types.js";
